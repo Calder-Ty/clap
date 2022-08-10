@@ -3659,7 +3659,9 @@ impl<'help> Arg<'help> {
         Some(longs)
     }
 
-    pub(crate) fn get_possible_values(&self) -> Vec<PossibleValue> {
+    /// Get the names of possible values for this argument. Only useful for user
+    /// facing applications, such as building help messages or man files
+    pub fn get_possible_values(&self) -> Vec<PossibleValue> {
         if !self.is_takes_value_set() {
             vec![]
         } else {
@@ -3679,6 +3681,19 @@ impl<'help> Arg<'help> {
             Some(&self.val_names)
         }
     }
+
+    // Get the names of possible values for this argument
+    // pub fn get_possible_value_names(&self) -> Option<Vec<&'help str>> {
+        // let possible_values = self.get_possible_values();
+        // if !possible_values.is_empty() {
+            // let possible_options: Vec<&str> = possible_values.iter().map(|pos| pos.get_name()).collect();
+            // Some(possible_options)
+        // }
+        // else {
+            // None
+        // }
+
+    // }
 
     /// Get the number of values for this argument.
     #[inline]
