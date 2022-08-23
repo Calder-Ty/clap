@@ -129,32 +129,20 @@ pub(crate) fn options(roff: &mut Roff, cmd: &clap::Command) {
                 roff.text([Inline::LineBreak]);
             }
 
-            // with help
+            // with help for each possible value
             if possibles.iter().any(|p| p.get_help().is_some()) {
-                roff.text([
-                    Inline::LineBreak,
-                    italic("Possible values:"),
-                ]);
+                roff.text([Inline::LineBreak, italic("Possible values:")]);
                 // Need to indent twice to get it to look right,
                 // because .TP heading indents, but that indent doesn't
                 // Carry over to the .IP for the bullets.
                 // The standard shift size is 7 for terminal devices
                 roff.control("RS", ["14"]);
-                for value in possibles {
-                    let mut line = vec![italic(value.get_name().as_str())];
-                    // Add help
-                    match value.get_help() {
-                        Some(help) => {
-                            line.push(roman(": "));
-                            line.push(roman(help.as_str()));
-                        }
-                        None => {}
-                    }
+                for line in format_possible_values(&possibles) {
                     roff.control("IP", ["\\(bu", "2"]);
-                    roff.text(line);
+                    roff.text([roman(line)]);
                 }
                 roff.control("RE", []);
-            } 
+            }
             // without help
             else {
                 let mut possible_value_text: Vec<Inline> =
@@ -295,3 +283,17 @@ fn option_default_values(opt: &clap::Arg) -> Option<String> {
     None
 }
 
+fn format_possible_values(possibles: &Vec<&clap::builder::PossibleValue>) -> Vec<String> {
+    let mut lines = vec![];
+    for value in possibles {
+        let val_name = value.get_name();
+        match value.get_help() {
+            Some(help) => {
+                lines.push(format!("{}: {}", val_name, help))
+            }
+            None => {lines.push(val_name.to_string())}
+        }
+    }
+    lines
+
+}
