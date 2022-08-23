@@ -133,10 +133,13 @@ pub(crate) fn options(roff: &mut Roff, cmd: &clap::Command) {
             if possibles.iter().any(|p| p.get_help().is_some()) {
                 roff.text([
                     Inline::LineBreak,
-                    bold("Possible values:"),
+                    italic("Possible values:"),
                 ]);
-                roff.control("RS", []);
-                roff.control("RS", []);
+                // Need to indent twice to get it to look right,
+                // because .TP heading indents, but that indent doesn't
+                // Carry over to the .IP for the bullets.
+                // The standard shift size is 7 for terminal devices
+                roff.control("RS", ["14"]);
                 for value in possibles {
                     let mut line = vec![italic(value.get_name().as_str())];
                     // Add help
@@ -147,11 +150,9 @@ pub(crate) fn options(roff: &mut Roff, cmd: &clap::Command) {
                         }
                         None => {}
                     }
-                    // line.push(Inline::LineBreak);
                     roff.control("IP", ["\\(bu", "2"]);
                     roff.text(line);
                 }
-                roff.control("RE", []);
                 roff.control("RE", []);
             } 
             // without help
