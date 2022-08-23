@@ -1,3 +1,5 @@
+use std::vec;
+
 use roff::{bold, italic, roman, Inline, Roff};
 
 pub(crate) fn subcommand_heading(cmd: &clap::Command) -> String {
@@ -113,21 +115,60 @@ pub(crate) fn options(roff: &mut Roff, cmd: &clap::Command) {
             body.push(roman(help));
         }
 
+        roff.control("TP", []);
+        roff.text(header);
+        roff.text(body);
+
         let possibles = &opt.get_possible_values();
+        let possibles: Vec<&clap::builder::PossibleValue> =
+            possibles.iter().filter(|pos| !pos.is_hide_set()).collect();
 
         if !(possibles.is_empty() || opt.is_hide_possible_values_set()) {
             if help_written {
                 // It looks nice to have a separation between the help and the values
-                body.push(Inline::LineBreak);
+                roff.text([Inline::LineBreak]);
             }
 
-            let possible_vals = possibles.iter().filter(|pos| !pos.is_hide_set()).collect();
-            body.append(&mut format_possible_values(possible_vals));
+            // with help
+            if possibles.iter().any(|p| p.get_help().is_some()) {
+                roff.text([
+                    Inline::LineBreak,
+                    bold("Possible values:"),
+                ]);
+                roff.control("RS", []);
+                roff.control("RS", []);
+                for value in possibles {
+                    let mut line = vec![italic(value.get_name().as_str())];
+                    // Add help
+                    match value.get_help() {
+                        Some(help) => {
+                            line.push(roman(": "));
+                            line.push(roman(help.as_str()));
+                        }
+                        None => {}
+                    }
+                    // line.push(Inline::LineBreak);
+                    roff.control("IP", ["\\(bu", "2"]);
+                    roff.text(line);
+                }
+                roff.control("RE", []);
+                roff.control("RE", []);
+            } 
+            // without help
+            else {
+                let mut possible_value_text: Vec<Inline> =
+                    vec![Inline::LineBreak, roman("[possible values: ")];
+                possible_value_text.push(italic(
+                    possibles
+                        .iter()
+                        .map(|p| p.get_name().as_str())
+                        .collect::<Vec<&str>>()
+                        .join(", "),
+                ));
+                possible_value_text.push(roman("]"));
+                roff.text(possible_value_text);
+            }
         }
-
-        roff.control("TP", []);
-        roff.text(header);
-        roff.text(body);
 
         if let Some(env) = option_environment(opt) {
             roff.control("RS", []);
@@ -253,40 +294,3 @@ fn option_default_values(opt: &clap::Arg) -> Option<String> {
     None
 }
 
-/// Generates a Vector of Inline Commands to push to the roff
-/// to properly format possible values that an option can take.
-fn format_possible_values(values: Vec<&clap::builder::PossibleValue>) -> Vec<Inline> {
-    let mut formats: Vec<Inline> = vec![];
-    // With Help
-    if values.iter().any(|p| p.get_help().is_some()) {
-        formats.push(Inline::LineBreak);
-        formats.push(roman("Possible values:"));
-        formats.push(Inline::LineBreak);
-        for value in values {
-            formats.push(roman("  - "));
-            formats.push(roman(value.get_name().as_str()));
-            match value.get_help() {
-                Some(help) => {
-                    formats.push(roman(": "));
-                    formats.push(roman(help.as_str()));
-                }
-                None => {}
-            }
-            formats.push(Inline::LineBreak);
-        }
-    }
-    // Without help
-    else {
-        formats.push(Inline::LineBreak);
-        formats.push(roman("[possible values: "));
-        formats.push(italic(
-            values
-                .iter()
-                .map(|p| p.get_name().as_str())
-                .collect::<Vec<&str>>()
-                .join(", "),
-        ));
-        formats.push(roman("]"));
-    }
-    formats
-}

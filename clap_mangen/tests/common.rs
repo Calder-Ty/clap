@@ -1,3 +1,5 @@
+use clap::builder::PossibleValue;
+
 pub fn basic_command(name: &'static str) -> clap::Command<'static> {
     clap::Command::new(name)
         .arg(
@@ -277,4 +279,98 @@ pub fn assert_matches_path(expected_path: impl AsRef<std::path::Path>, cmd: clap
     snapbox::Assert::new()
         .action_env("SNAPSHOTS")
         .matches_path(expected_path, buf);
+}
+
+pub fn possible_values_command(name: &'static str) -> clap::Command<'static> {
+    clap::Command::new(name)
+        .trailing_var_arg(true)
+        .arg(
+            clap::Arg::new("choice")
+                .long("choice")
+                .action(clap::ArgAction::Set)
+                .value_parser(["bash", "fish", "zsh"]),
+        )
+        .arg(
+            clap::Arg::new("method")
+            .long("method")
+            .action(clap::ArgAction::Set)
+            .value_parser([
+                PossibleValue::new("fast").help("use the Fast method"),
+                PossibleValue::new("slow").help("use the slow method"),
+                PossibleValue::new("normal").help("use normal mode").hide(true)
+            ])
+        )
+        .arg(
+            clap::Arg::new("unknown")
+                .long("unknown")
+                .value_hint(clap::ValueHint::Unknown),
+        )
+        .arg(
+            clap::Arg::new("other")
+                .long("other")
+                .value_hint(clap::ValueHint::Other),
+        )
+        .arg(
+            clap::Arg::new("path")
+                .long("path")
+                .short('p')
+                .value_hint(clap::ValueHint::AnyPath),
+        )
+        .arg(
+            clap::Arg::new("file")
+                .long("file")
+                .short('f')
+                .value_hint(clap::ValueHint::FilePath),
+        )
+        .arg(
+            clap::Arg::new("dir")
+                .long("dir")
+                .short('d')
+                .value_hint(clap::ValueHint::DirPath),
+        )
+        .arg(
+            clap::Arg::new("exe")
+                .long("exe")
+                .short('e')
+                .value_hint(clap::ValueHint::ExecutablePath),
+        )
+        .arg(
+            clap::Arg::new("cmd_name")
+                .long("cmd-name")
+                .value_hint(clap::ValueHint::CommandName),
+        )
+        .arg(
+            clap::Arg::new("cmd")
+                .long("cmd")
+                .short('c')
+                .value_hint(clap::ValueHint::CommandString),
+        )
+        .arg(
+            clap::Arg::new("command_with_args")
+                .action(clap::ArgAction::Set)
+                .num_args(1..)
+                .value_hint(clap::ValueHint::CommandWithArguments),
+        )
+        .arg(
+            clap::Arg::new("user")
+                .short('u')
+                .long("user")
+                .value_hint(clap::ValueHint::Username),
+        )
+        .arg(
+            clap::Arg::new("host")
+                .short('H')
+                .long("host")
+                .value_hint(clap::ValueHint::Hostname),
+        )
+        .arg(
+            clap::Arg::new("url")
+                .long("url")
+                .value_hint(clap::ValueHint::Url),
+        )
+        .arg(
+            clap::Arg::new("email")
+                .long("email")
+                .value_hint(clap::ValueHint::EmailAddress),
+        )
 }
